@@ -6,8 +6,7 @@
  * @copyright	Copyright: (c)2010 Chuck Burgess. All Rights Reserved.
  *
  * Please feel free to visit my blog http://blogchuck.com
- *
- * @see http://www.google.com/apis/maps/signup.html to get your own API key
+ * @internal GoogleMaps V3
  */
 class GoogleMapsComponent extends Object
 {
@@ -17,20 +16,13 @@ class GoogleMapsComponent extends Object
 	var $name = 'GoogleMaps';
 	
 	/**
-	 * Google API Key required to access Google API
+	 * Googl Maps base URL
 	 *
 	 * @var string
 	 * @access private
 	 */
-	private $api_key = 'your_key_here';
+	private $base_url = "http://maps.google.com/maps";
 	
-	/**
-	 * Googl Maps base API URL
-	 *
-	 * @var string
-	 * @access private
-	 */
-	private $base_url = "http://maps.google.com/maps/geo";
 	
 	/**
 	* Get the geo coordinates for a given address.
@@ -55,7 +47,7 @@ class GoogleMapsComponent extends Object
 		$fields[] = urlencode($address['address']);
 		$fields[] = urlencode($address['city']);
 		$fields[] = urlencode($address['state']);
-		if($address['zipcode'])
+		if(isset($address['zipcode']) and !empty($address['zipcode']))
 		{
 			$fields[] = urlencode($address['zipcode']);
 		}
@@ -63,10 +55,9 @@ class GoogleMapsComponent extends Object
 		// build the url query for the maps API
 		$fields['q'] = implode('+', $fields);
 		$fields['output'] = 'csv';
-		$fields['key'] = $this->api_key;
 		
 		// get the geocode data
-		$result = $this->get_content($fields);
+		$result = $this->get_content($this->base_url.'/geo', $fields);
 		
 		// check the result from the API
 		// If status is 200, we are OK
@@ -75,7 +66,7 @@ class GoogleMapsComponent extends Object
 			return array('latitude'=>$result[2],'longitude'=>$result[3]);
 		}
 			
-		// if status is 602, there was a problem, we can attempt a retry
+		// if status is 602, there was a problem, we can attempt a retry *recursion*
 		if($result[0]=='602') 
 		{
 			// if there was a zipcode provided
@@ -96,11 +87,12 @@ class GoogleMapsComponent extends Object
 	/**
 	 * Get contents
 	 *
+	 * @param string $url			The URL for the query
 	 * @param string $fields		The URL query string for the maps API
 	 * @access private
 	 * @uses HTTPSockets Core Utility
 	 */
-	function get_content($fields)
+	function get_content($url, $fields)
 	{
 		// use HttpSocket Core Utility
 		App::Import('Core', 'HttpSocket');
@@ -109,7 +101,7 @@ class GoogleMapsComponent extends Object
 		$this->socket = new HttpSocket();
 		
 		// GET the results from Google
-		$result = $this->socket->get($this->base_url, $fields);
+		$result = $this->socket->get($url, $fields);
 		
 		// return the results as an array
 		return explode(',', $result);
