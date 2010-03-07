@@ -51,6 +51,9 @@ class GoogleMapsComponent extends Object
 		{
 			$fields[] = urlencode($address['zipcode']);
 		}
+		if(isset($address['country']) and !empty($address['country'])){
+                    $fields[] = urlencode($address['country']);
+                }
 		
 		// build the url query for the maps API
 		$fields['q'] = implode('+', $fields);
@@ -58,6 +61,9 @@ class GoogleMapsComponent extends Object
 		
 		// get the geocode data
 		$result = $this->get_content($this->base_url.'/geo', $fields);
+		
+		// make the result an array
+		$result = explode(',', $result);
 		
 		// check the result from the API
 		// If status is 200, we are OK
@@ -85,6 +91,64 @@ class GoogleMapsComponent extends Object
 	}
 	
 	/**
+	* Get Address with GEO coordinates
+	*
+	* Get the valid address for the address given. Zipcode and Country are possibly optional.
+	*
+	* @param array $address         The Address to get with keys street, city, state, zipcode
+	* @access public
+	* @returns array $address       Returns the validated address with the lattitude and longitude included
+	*/
+	function geo_address($address = null){
+		
+		// must have a valid address with address, city, state minimum
+		if($address == null or count($address) < 3)
+		{
+			// valid information was not passed
+			return null;
+		}
+		
+		// setup the submit fields array based on the address
+		$fields = array();
+		
+		// urlencode the values of the array being passed
+		$fields[] = urlencode($address['address']);
+		$fields[] = urlencode($address['city']);
+		$fields[] = urlencode($address['state']);
+		if(isset($address['zipcode']) and !empty($address['zipcode']))
+		{
+		    $fields[] = urlencode($address['zipcode']);
+		}
+		if(isset($address['country']) and !empty($address['country'])){
+                    $fields[] = urlencode($address['country']);
+                }
+		// build the url query for the maps API
+		$fields['q'] = implode('+', $fields);
+		$fields['output'] = 'json';
+                
+		// get the geocode data
+		$result = $this->get_content($this->base_url.'/geo', $fields);
+                
+                // decode the results
+                $result = json_decode($result);
+                
+                // build the new array of data (this could be improved)
+                if($json = $result->{'Placemark'}[0]->{'AddressDetails'}->{'Country'}->{'AdministrativeArea'})
+                {
+                    $address['address']     = $json->{'SubAdministrativeArea'}->{'Locality'}->{'Thoroughfare'}->{'ThoroughfareName'};
+                    $address['city']        = $json->{'SubAdministrativeArea'}->{'Locality'}->{'LocalityName'};
+                    $address['state']       = $json->{'AdministrativeAreaName'};
+                    $address['zipcode']     = $json->{'SubAdministrativeArea'}->{'Locality'}->{'PostalCode'}->{'PostalCodeNumber'};
+                    $address['country']     = $result->{'Placemark'}[0]->{'AddressDetails'}->{'Country'}->{'CountryNameCode'};
+                    $address['latitude']    = $result->{'Placemark'}[0]->{'Point'}->{'coordinates'}[1];
+                    $address['longitude']   = $result->{'Placemark'}[0]->{'Point'}->{'coordinates'}[0];
+                }
+                
+		// return the address
+		return $address;
+	}
+	
+	/**
 	 * Get contents
 	 *
 	 * @param string $url			The URL for the query
@@ -104,7 +168,7 @@ class GoogleMapsComponent extends Object
 		$result = $this->socket->get($url, $fields);
 		
 		// return the results as an array
-		return explode(',', $result);
+		return $result;
 	}	
 }
 ?>
