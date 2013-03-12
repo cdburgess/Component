@@ -6,25 +6,21 @@
  * @package	BillingValidation Component
  * @author	Author: Chuck Burgess <cdburgess@gmail.com>
  * @license	License: http://creativecommons.org/licenses/by-sa/3.0/
- * @copyright	Copyright: (c)2010 Chuck Burgess. All Rights Reserved.
+ * @copyright	Copyright: (c)2010-2013 Chuck Burgess. All Rights Reserved.
  *
  * Please feel free to visit my blog http://blogchuck.com
  * 
  */
-class BillingValidationComponent extends Object
-{
-	/**
-	 * Name of the component - permits use in other components as required
-	 */
-	var $name = 'BillingValidation';
+App::uses('Component', 'Controller');
+class BillingValidationComponent extends Object {
 	
-	/**
-	 * Valid Credit Cards
-	 * identify the credit cards accepted by this merchant (comment out the lines not accepted)
-	 *
-	 * @param array
-	 * @acces private
-	 */
+/**
+ * Valid Credit Cards
+ * identify the credit cards accepted by this merchant (comment out the lines not accepted)
+ *
+ * @param array
+ * @acces private
+ */
 	private $valid_cc_types = array(
 		'american_express',
 		'diners_club_carte_blanche',
@@ -40,16 +36,16 @@ class BillingValidationComponent extends Object
 		'visa_electron',
 	);
 	
-	/**
-	* Verify the Credit Card is a Valid Number
-	* 
-	* @uses cc_type
-	* @uses _luhn_validation
-	* @param string $number  The credit card number
-	* @return array  The validation information 'valid' => {true|false} [, 'error' => {message}]
-	* @access public
-	*/
-	function validate_card($number) {
+/**
+ * Verify the Credit Card is a Valid Number
+ * 
+ * @uses cc_type
+ * @uses _luhn_validation
+ * @param string $number  The credit card number
+ * @return array  The validation information 'valid' => {true|false} [, 'error' => {message}]
+ * @access public
+ */
+	public function validate_card($number) {
 		
 		// strip all posible invalid characters
 		$number = preg_replace('/\D/', '', $number);
@@ -58,20 +54,17 @@ class BillingValidationComponent extends Object
 		$type = $this->cc_type($number);
 		
 		// is the credit card a known type
-		if (!$type) 
-		{
+		if (!$type) {
 			return array('valid' => false, 'error' => 'Does not match known card types.');
 		}
 		
 		// is the credit card accepted
-		if(!in_array($type, $this->valid_cc_types))
-		{
+		if (!in_array($type, $this->valid_cc_types)) {
 			return array('valid' => false, 'error' => 'This type of Credit Card is not accepted.');
 		}
 
 		// does the credit card pass Luhn (modulus 10) validation
-		if (!$this->_luhn_validation($number)) 
-		{
+		if (!$this->_luhn_validation($number)) {
 			return array('valid' => false, 'error' => 'Invalid credit card number.');
 		}
 
@@ -79,23 +72,22 @@ class BillingValidationComponent extends Object
 		return array('valid' => true);
 	}
 	
-	/**
-	* Credit Card Types
-	*
-	* Currently this method will detect all valid credit cards
-	*
-	* @param string $number		The credit card to check
-	* @return string $type		The credit card type
-	* @access public
-	*/
-	function cc_type($number) {
+/**
+ * Credit Card Types
+ *
+ * Currently this method will detect all valid credit cards
+ *
+ * @param string $number		The credit card to check
+ * @return string $type		The credit card type
+ * @access public
+ */
+	public function cc_type($number) {
 		
 		// Strip any non-digits (useful for credit card numbers with spaces and hyphens)
 		$number = preg_replace('/\D/', '', $number);
 		
 		// American Express (AmEx) P: 34,37 L: 15
-		if(preg_match('/^3(?:4|7)\d{13}$/', $number))
-		{
+		if (preg_match('/^3(?:4|7)\d{13}$/', $number)) {
 			$type = 'american_express';
 		
 		// Diners Club Carte Blanche (DC-CB) P: 300-305, 3095 L: 14
@@ -156,18 +148,17 @@ class BillingValidationComponent extends Object
 		return $type;
 	}
 	
-	/**
-	* The Luhn Validation
-	*
-	* The algorithm (aka Modulus 10) is the checksum used to validate a variety of identification numbers.
-	* Most credit cards use this same formula. It is only intended to prevent errors, not mailcious attack.
-	*
-	* @param string $number			The credit card number
-	* @return bool {true|false}
-	* @access private
-	*/
-	function _luhn_validation($number)
-	{
+/**
+ * The Luhn Validation
+ *
+ * The algorithm (aka Modulus 10) is the checksum used to validate a variety of identification numbers.
+ * Most credit cards use this same formula. It is only intended to prevent errors, not mailcious attack.
+ *
+ * @param string $number			The credit card number
+ * @return bool {true|false}
+ * @access protected
+ */
+	protected function _luhn_validation($number) {
 		// Strip any non-digits (useful for credit card numbers with spaces and hyphens)
 		$number = preg_replace('/\D/', '', $number);
 		
@@ -184,12 +175,10 @@ class BillingValidationComponent extends Object
 			$digit = $number[$i];
 			
 			// Multiply alternate digits by two
-			if ($i % 2 == $parity) 
-			{
+			if ($i % 2 == $parity) {
 				$digit *= 2;
 				// If the sum is two digits, add them together (in effect)
-				if ($digit > 9) 
-				{
+				if ($digit > 9) {
 					// same as 1+1 = 11-9, 1+2 = 12-9, etc. Number will never exceed 18
 					$digit -= 9;
 				}
@@ -202,4 +191,3 @@ class BillingValidationComponent extends Object
 		return ($total % 10 == 0) ? true : false;
 	}
 }
-?>
