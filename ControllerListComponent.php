@@ -17,7 +17,7 @@ class ControllerListComponent extends Component {
  * @return void
  * @access public
  */
-    public function initialize($controller) {
+    public function initialize(Controller $controller) {
         $this->controller = $controller;
     }
 
@@ -28,7 +28,7 @@ class ControllerListComponent extends Component {
  * @access public
  * @author Chuck Burgess
  **/
-    public function shutdown() {
+    public function shutdown(Controller $controller) {
     }
 
 /**
@@ -40,7 +40,7 @@ class ControllerListComponent extends Component {
  * @return void
  * @access public
  */
-    public function startup($controller) {
+    public function startup(Controller $controller) {
     }
 
 /**
